@@ -1,6 +1,6 @@
 # HANDOFF – reprendre le projet dans une nouvelle session
 
-*Dernière mise à jour : 27/10/2026. Dépôt privé ; données du client INOVA incluses (plans de vente, visuels) : ne pas rendre public.*
+*Dernière mise à jour : 28/10/2026. Données du client INOVA incluses (plans de vente, visuels). ⚠ Le dépôt est **PUBLIC** (GitHub Pages) : signalé à Tom, qui a demandé de pousser quand même ; à reconfirmer avant d'ajouter d'autres niveaux ou données.*
 
 ## 1. Objectif
 Remplacer, sur les visuels 360° d'étage (30 images par niveau, rendus Object2VR), les hotspots par des **polygones interactifs colorés par
@@ -32,8 +32,8 @@ Variable `CARRE_BASE` = racine ci-dessus si elle est ailleurs.
 Couleurs : T2 vert `#2bb673`, T3 bleu `#2f80ed`, T4 orange `#f2994a`, T4/T5 violet `#9b51e0`. Pas de prix ni de statut dans les PDF.
 
 ## 4. État d'avancement
-- **R+1 : terminé et fonctionnel** (4 lots, 30 images). Livrables générés par `build_final.py` / `mk_editor2.py` (non versionnés).
-- **RDC, R+2 (et TOITURE) : à faire** avec la même méthode (§5). Puis **sélecteur d'étages** pour les assembler.
+- **R+1 : terminé, polygones recalculés avec le modèle d'orbite (28/10/2026)** à partir des 4 tracés de Tom (`work/keys_R1.json`, images 0, 8, 15, 23). Résultat dans `work/polys_frames_orbite.json`, maquette publiée dans `docs/`. Précision mesurée : 1,8 px rms sur les tracés, 2,8 px en test à blanc (l'ancien report : ≈ 20 px). Pas encore regardé image par image par Tom dans la maquette.
+- **RDC, R+2 (et TOITURE) : à faire** avec la méthode §5 (4 tracés par niveau, plus d'alignement SIFT/ECC). Puis **sélecteur d'étages**.
 - À valider avec Tom (hypothèses de ma part, non confirmées) :
   1. Position des lots sur la maquette R+1 (vue image 0) : lot 8 en haut à gauche, 7 en haut à droite (le T3), 5 en bas à gauche, 6 en bas à droite. Déduit des hotspots Object2VR (le seul T3) et des mini-plans des PDF.
   2. Correspondance dossiers vues 3D → lots : 5→`R+1_T4_3`, 6→`R+1_T4_4`, 7→`R+1_T3_2`, 8→`R+1_T3_1` (les noms de dossiers ne suivent pas la numérotation des lots). À vérifier ; RDC et R+2 : à déterminer de la même façon.
@@ -70,11 +70,13 @@ Les polygones sont dans le plan du **dessus des murs** ; entre deux images cons�
 - Info-bulle tactile : 1er appui = info-bulle, 2e = fiche (non testé sur appareil réel).
 - Encodage : les PDF contiennent des accents ; extraire via PyMuPDF (`get_text('words')`), pas via la console Windows.
 
-**Publication** : `docs/` est servi par GitHub Pages (https://doktom.github.io/carre-hastings-maquette/). Après régénération : copier le contenu de `maquette-r1/` dans `docs/` (+ `controle-polygones.html`), commit, push.
+**Reprendre une session** : lire ce fichier puis `CLAUDE.md`. Fichiers du dernier état : `work/keys_R1.json` (tracés de Tom, export de l'outil ; à réimporter via « Importer… » dans `controle-polygones.html`), `work/polys_frames_orbite.json` (30 images calculées), `work/orbit.py` / `apply_keys.py` / `mk_editor3.py` / `keyframes.py` (méthode), `work/build_final.py <sortie> [polys.json]` (maquette). Clone sous Windows : chemin court obligatoire (ex. `C:\Users\tom\Temp\chm`), sinon « Filename too long ».
+
+**Publication** : `docs/` est servi par GitHub Pages (https://doktom.github.io/carre-hastings-maquette/). Après régénération : copier le contenu de `maquette-r1/` dans `docs/` (+ `controle-polygones.html` généré par `mk_editor3.py`), commit, push.
 
 ## 8. À faire ensuite (par priorité)
-1. Faire valider le R+1 par Tom (rendu + correspondances §4).
-2. RDC et R+2 : tracer, aligner, propager, contrôler (§5).
+1. Faire valider le R+1 par Tom (rendu image par image + correspondances §4).
+2. RDC et R+2 : générer l'outil de contrôle pour ces niveaux (`mk_editor3.py` est encore spécifique au R+1 : noms `r1_XX`, `REC`, chemins), tracer 4 images par niveau, `apply_keys.py`, régénérer.
 3. Généraliser `build_assets.py` / `build_final.py` / `mk_editor2.py` : plusieurs niveaux, N lots quelconques, mapping lot→dossier 3D configurable (un `config.json` par programme), sans valeurs en dur.
 4. Sélecteur d'étages + vue d'ensemble ; héberger sur `atj-app.com` (serveur web requis pour la version dossier).
 5. Outils d'édition pour projets complexes : lots à plusieurs zones (multi-polygones, trous), recherche/filtre dans la liste des lots, duplication de contours, vérification automatique des chevauchements.

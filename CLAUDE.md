@@ -1,6 +1,6 @@
 # Carré Hastings – maquette 360° interactive (INOVA / ATJ Graphics)
 
-Lire d'abord **HANDOFF.md** (état du projet, décisions, reprise pas à pas).
+Lire d'abord **HANDOFF.md** (état du projet, décisions, reprise pas à pas, §4 = où on en est).
 
 ## Règles de travail
 - Répondre en **français**. Ton direct, sans jargon inutile ; dire clairement ce qui est vérifié et ce qui ne l'est pas.
@@ -10,3 +10,5 @@ Lire d'abord **HANDOFF.md** (état du projet, décisions, reprise pas à pas).
 - Les chemins source (OneDrive de Tom) ne sont pas dans le dépôt : voir HANDOFF.md > « Sources ».
 - Python : `pip install opencv-python numpy scipy pillow pymupdf`. Pas de poppler.
 - Tester les pages avec un vrai navigateur (clics réels, pas seulement des appels JS) : une régression a déjà échappé à des tests purement JS.
+- Méthode retenue pour les polygones : **4 images tracées à la main par niveau** (0, 8, 15, 23) + **modèle de caméra en orbite** (`work/orbit.py`), pas l'alignement SIFT/ECC. Mesurer avant d'affirmer une précision (test à blanc : retirer une image tracée et la prédire).
+- Cloner dans un chemin court sous Windows ; ne pas lancer de serveur de test sur un port déjà utilisé (vérifier que la page servie est la bonne).

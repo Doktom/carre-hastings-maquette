@@ -8,5 +8,4 @@ __pycache__/
 /editeur-polygones.html
 *_tmp.json
 out/
-polys_frames_orbite.json
 build/
