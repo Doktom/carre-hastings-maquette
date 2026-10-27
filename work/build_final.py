@@ -15,7 +15,8 @@ os.remove(os.path.join(OUT, 'img', 'r1_000.jpg'))
 lots = json.load(open(os.path.join(PV, 'site', 'lots.json'), encoding='utf8'))
 for l in lots.values():
     l['table'] = [[re.sub(r'^(\w+) \1$', r'\1', r[0]), r[1]] for r in l['table']]
-pf = json.load(open(os.path.join(PV, 'polys_frames.json')))
+POLYS = sys.argv[2] if len(sys.argv) > 2 else os.path.join(PV, 'polys_frames.json')
+pf = json.load(open(POLYS))
 frames = [pf[str(k)] for k in range(30)]
 
 tpl = open(os.path.join(PV, 'final_template2.html'), encoding='utf8').read()

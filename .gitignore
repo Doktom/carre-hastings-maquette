@@ -9,3 +9,4 @@ __pycache__/
 *_tmp.json
 out/
 polys_frames_orbite.json
+build/
