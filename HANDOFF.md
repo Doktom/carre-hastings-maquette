@@ -69,6 +69,8 @@ Les polygones sont dans le plan du **dessus des murs** ; entre deux images cons�
 - Info-bulle tactile : 1er appui = info-bulle, 2e = fiche (non testé sur appareil réel).
 - Encodage : les PDF contiennent des accents ; extraire via PyMuPDF (`get_text('words')`), pas via la console Windows.
 
+**Publication** : `docs/` est servi par GitHub Pages (https://doktom.github.io/carre-hastings-maquette/). Après régénération : copier le contenu de `maquette-r1/` dans `docs/` (+ `controle-polygones.html`), commit, push.
+
 ## 8. À faire ensuite (par priorité)
 1. Faire valider le R+1 par Tom (rendu + correspondances §4).
 2. RDC et R+2 : tracer, aligner, propager, contrôler (§5).

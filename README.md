@@ -13,7 +13,13 @@ complète (plan de vente PDF, plan 3D, vues intérieures).
 | `work/` | scripts Python, modèles de pages, données (tracé des polygones, lots) — à lancer depuis ce dossier |
 | `work/site/` | images des vues intérieures, plans de vente (images + PDF), données des lots |
 | `work/final/frames/` | les 30 images du R+1 en 1920 px |
-| `docs/` | notes de méthode |
+| `docs/` | pages publiées avec GitHub Pages (maquette R+1 + outil de contrôle) |
+
+## En ligne (GitHub Pages)
+- Maquette R+1 : https://doktom.github.io/carre-hastings-maquette/
+- Outil de contrôle des polygones : https://doktom.github.io/carre-hastings-maquette/controle-polygones.html
+
+(`docs/` est régénéré par `build_final.py` / `mk_editor2.py` puis recopié ; voir HANDOFF.md.)
 
 ## Livrables générés (non versionnés, reproductibles)
 - `maquette-r1-autonome.html` : un seul fichier, tout embarqué (~14 Mo)
