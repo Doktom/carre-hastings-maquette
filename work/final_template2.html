@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Carré Hastings – Maquette interactive R+1</title>
+<style>
+:root{--bg:#14171c;--panel:#fff;--ink:#1d232b;--mute:#6b7683;--line:#e4e8ed;
+ --T2:#2bb673;--T3:#2f80ed;--T4:#f2994a;--T5:#9b51e0;--acc:#1d232b}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink)}
+#stage{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#wrap{position:relative;aspect-ratio:2560/1440;width:min(100vw,calc(100vh*2560/1440));max-height:100vh}
+#wrap img,#wrap svg,#wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#wrap img{object-fit:fill;user-select:none;-webkit-user-drag:none}
+#wrap canvas{user-select:none}
+#wrap{touch-action:pan-y;cursor:grab}#wrap.drag{cursor:grabbing}
+#ctl{position:absolute;left:14px;bottom:12px;display:flex;gap:8px}
+#ctl .btn{background:rgba(255,255,255,.94);box-shadow:0 4px 18px rgba(0,0,0,.18)}
+#load{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:rgba(255,255,255,.94);border-radius:10px;padding:6px 12px;font-weight:600;font-size:12px}
+.lot{fill-opacity:.32;stroke-width:3;stroke-linejoin:round;cursor:pointer;transition:fill-opacity .15s,stroke-width .15s;vector-effect:non-scaling-stroke;outline:none}
+.lot:hover,.lot:focus-visible,.lot.on{fill-opacity:.58;stroke-width:4.5}
+.lot[data-t="T2"]{fill:var(--T2);stroke:var(--T2)}
+.lot[data-t="T3"]{fill:var(--T3);stroke:var(--T3)}
+.lot[data-t="T4"]{fill:var(--T4);stroke:var(--T4)}
+.lot[data-t="T4/T5"]{fill:var(--T5);stroke:var(--T5)}
+.pin{pointer-events:none;font:700 15px system-ui;fill:#fff;paint-order:stroke;stroke:rgba(0,0,0,.55);stroke-width:4px;text-anchor:middle}
+@media (max-width:700px){.pin{font-size:20px}}
+/* en-tête + légende */
+#top{position:absolute;left:14px;top:12px;right:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none}
+.chip{pointer-events:auto;background:rgba(255,255,255,.94);backdrop-filter:blur(6px);border-radius:12px;padding:8px 12px;box-shadow:0 4px 18px rgba(0,0,0,.18)}
+.chip b{display:block;font-size:15px}.chip small{color:var(--mute)}
+#legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+#legend span{display:inline-flex;align-items:center;gap:6px;font-weight:600}
+#legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+/* info-bulle */
+#tip{position:fixed;z-index:5;pointer-events:none;width:230px;background:var(--panel);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.35);overflow:hidden;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s}
+#tip.show{opacity:1;transform:none}
+#tip.touch{pointer-events:auto;position:fixed;left:50%!important;top:auto!important;bottom:14px;transform:translateX(-50%);width:min(92vw,340px);cursor:pointer}
+.tip-h{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;color:#fff;font-weight:700}
+.tip-b{padding:9px 12px 10px}
+.tip-b .big{font-size:20px;font-weight:700}
+.tip-b .row{display:flex;justify-content:space-between;color:var(--mute);font-size:12.5px;margin-top:2px}
+.tip-b .row b{color:var(--ink)}
+.cta{margin-top:8px;font-size:12px;color:var(--mute);border-top:1px solid var(--line);padding-top:6px}
+/* fiche */
+#modal{position:fixed;inset:0;z-index:10;background:rgba(10,12,16,.66);display:none;align-items:center;justify-content:center;padding:2.5vh 2.5vw}
+#modal.open{display:flex}
+#card{background:var(--panel);width:min(1280px,100%);height:min(860px,100%);border-radius:16px;display:grid;grid-template-columns:minmax(0,1fr) 320px;grid-template-rows:auto minmax(0,1fr);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+#hd{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
+#hd h2{margin:0;font-size:18px}
+.badge{color:#fff;font-weight:700;border-radius:8px;padding:3px 9px}
+#hd .sp{flex:1}
+.btn{appearance:none;border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 12px;font:600 13px inherit;color:var(--ink);cursor:pointer;text-decoration:none;display:inline-flex;gap:6px;align-items:center}
+.btn:hover{background:#f3f5f8}
+.btn.dark{background:var(--acc);color:#fff;border-color:var(--acc)}
+#main{display:flex;flex-direction:column;min-width:0;min-height:0}
+#tabs{display:flex;gap:4px;padding:10px 14px 0;border-bottom:1px solid var(--line)}
+#tabs button{appearance:none;border:0;background:none;padding:9px 12px;font:600 13px inherit;color:var(--mute);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
+#tabs button.on{color:var(--ink);border-color:var(--ink)}
+#view{flex:1;min-height:0;position:relative;background:#f4f6f8;display:flex;flex-direction:column}
+#view iframe{flex:1;border:0;width:100%}
+#view .pic{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:10px}
+#view .pic img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}
+#thumbs{display:flex;gap:8px;padding:8px 10px;overflow-x:auto;background:#fff;border-top:1px solid var(--line)}
+#thumbs img{height:64px;width:auto;border-radius:6px;cursor:pointer;opacity:.6;border:2px solid transparent}
+#thumbs img.on{opacity:1;border-color:var(--ink)}
+#side{border-left:1px solid var(--line);overflow:auto;padding:14px 16px;min-height:0}
+#side h3{margin:0 0 8px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+#side table{width:100%;border-collapse:collapse;margin-bottom:16px}
+#side td{padding:5px 0;border-bottom:1px solid var(--line)}
+#side td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+#side tr.tot td{font-weight:700;font-size:15px;border-bottom:2px solid var(--ink)}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.kpi{background:#f4f6f8;border-radius:10px;padding:8px 10px}.kpi small{color:var(--mute);display:block}.kpi b{font-size:17px}
+.note{color:var(--mute);font-size:11.5px}
+@media (max-width:860px){
+ #card{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr) auto;height:100%}
+ #side{border-left:0;border-top:1px solid var(--line);max-height:38vh}
+ #top{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div id="stage">
+ <div id="wrap">
+  <canvas id="frame" width="1920" height="1080" role="img" aria-label="Maquette – étage R+1"></canvas>
+  <svg id="svg" viewBox="0 0 2560 1440" preserveAspectRatio="none"></svg>
+  <div id="top">
+   <div class="chip"><b>Carré Hastings · Étage R+1</b><small>Glissez pour tourner · survolez un appartement</small></div>
+   <div class="chip" id="legend"></div>
+  </div>
+  <div id="ctl"><button class="btn" id="prev" aria-label="Tourner à gauche">◀</button><button class="btn" id="next" aria-label="Tourner à droite">▶</button><button class="btn" id="auto">⟳ Rotation auto</button></div>
+  <div id="load">Chargement des vues…</div>
+ </div>
+</div>
+<div id="tip" role="tooltip"></div>
+<div id="modal" aria-hidden="true">
+ <div id="card" role="dialog" aria-modal="true">
+  <div id="hd"><span class="badge" id="m-badge"></span><h2 id="m-title"></h2><span class="sp"></span>
+   <a class="btn" id="m-dl" download target="_blank" rel="noopener">⬇ Plan de vente (PDF)</a>
+   <button class="btn dark" id="m-close" aria-label="Fermer">✕ Fermer</button></div>
+  <div id="main"><div id="tabs"></div><div id="view"></div></div>
+  <aside id="side"></aside>
+ </div>
+</div>
+<script>
+const A=p=>(window.ASSET&&window.ASSET[p])||p;
+const LOTS=__LOTS__;
+const FRAMES=__POLYS__;const NF=FRAMES.length;
+const COLORS={"T2":"#2bb673","T3":"#2f80ed","T4":"#f2994a","T4/T5":"#9b51e0"};
+const NS="http://www.w3.org/2000/svg";
+const svg=document.getElementById("svg"),tip=document.getElementById("tip");
+const $=s=>document.querySelector(s);
+const annex=l=>{const i=l.table.findIndex(r=>r[0]==="TOTAL");return i<0?[]:l.table.slice(i+1)};
+const rooms=l=>{const i=l.table.findIndex(r=>r[0]==="TOTAL");return i<0?l.table:l.table.slice(0,i)};
+const total=l=>(l.table.find(r=>r[0]==="TOTAL")||[,"–"])[1];
+
+/* légende */
+const used=[...new Set(Object.values(LOTS).map(l=>l.typo))];
+$("#legend").innerHTML=used.map(t=>`<span><i style="background:${COLORS[t]}"></i>${t}</span>`).join("");
+
+/* polygones */
+const polyEl={},pinEl={};
+for(const n of Object.keys(FRAMES[0])){
+  const l=LOTS[n];
+  const p=document.createElementNS(NS,"polygon");
+  p.setAttribute("class","lot");p.setAttribute("data-t",l.typo);p.setAttribute("data-n",n);
+  p.setAttribute("tabindex","0");p.setAttribute("role","button");
+  p.setAttribute("aria-label",`Appartement ${n}, ${l.typo}, ${total(l)} m²`);
+  svg.appendChild(p);polyEl[n]=p;
+  const t=document.createElementNS(NS,"text");t.setAttribute("class","pin");t.textContent=n;svg.appendChild(t);pinEl[n]=t;
+  p.addEventListener("pointerenter",e=>{if(e.pointerType!=="touch"&&!dragging)showTip(n,e)});
+  p.addEventListener("pointermove",e=>{if(e.pointerType!=="touch"&&!dragging)moveTip(e)});
+  p.addEventListener("pointerleave",e=>{if(e.pointerType!=="touch")hideTip()});
+  p.addEventListener("focus",()=>{const r=p.getBoundingClientRect();showTip(n,{clientX:r.left+r.width/2,clientY:r.top+r.height/2})});
+  p.addEventListener("blur",hideTip);
+  p.addEventListener("click",e=>{
+    if(moved>6)return;
+    if(e.pointerType==="touch"||matchMedia("(pointer:coarse)").matches){
+      if(tip.dataset.n!==n||!tip.classList.contains("show")){showTip(n,e,true);return}
+    }
+    openLot(n)});
+  p.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openLot(n)}});
+}
+function centroid(pts){let a=0,cx=0,cy=0;for(let i=0;i<pts.length;i++){const[x0,y0]=pts[i],[x1,y1]=pts[(i+1)%pts.length];const c=x0*y1-x1*y0;a+=c;cx+=(x0+x1)*c;cy+=(y0+y1)*c}a/=2;return[cx/(6*a),cy/(6*a)]}
+/* rotation */
+const cv=$("#frame"),ctx=cv.getContext("2d"),wrap=$("#wrap");const bm=[];
+let cur_f=0,dragging=false,moved=0,autoT=null;
+const cache=[];let loaded=0;
+for(let i=0;i<NF;i++){const im=new Image();im.onload=im.onerror=()=>{if(im.naturalWidth)createImageBitmap(im).then(b=>{bm[i]=b;if(i===cur_f)draw()}).catch(()=>{if(i===cur_f)draw()});loaded++;if(loaded>=NF)$("#load").remove();else $("#load").textContent=`Chargement des vues… ${loaded}/${NF}`};im.src=A(`frames/r1_${String(i).padStart(2,"0")}.jpg`);cache.push(im)}
+function draw(){const s=bm[cur_f]||(cache[cur_f]&&cache[cur_f].naturalWidth?cache[cur_f]:null);if(s)ctx.drawImage(s,0,0,cv.width,cv.height)}
+function setFrame(f){
+  cur_f=((Math.round(f)%NF)+NF)%NF;
+  draw();
+  const F=FRAMES[cur_f];
+  for(const n in F){
+    polyEl[n].setAttribute("points",F[n].map(q=>q.map(v=>v.toFixed(1)).join(",")).join(" "));
+    const c=centroid(F[n]);pinEl[n].setAttribute("x",c[0]);pinEl[n].setAttribute("y",c[1]+16);
+  }
+}
+setFrame(0);
+let sx=0,sf=0;
+wrap.addEventListener("pointerdown",e=>{if(e.target.closest("#ctl"))return;dragging=true;moved=0;sx=e.clientX;sf=cur_f;stopAuto();hideTip()});
+window.addEventListener("pointermove",e=>{if(!dragging)return;const dx=e.clientX-sx;moved=Math.max(moved,Math.abs(dx));if(moved>6){wrap.classList.add("drag");hideTip();setFrame(sf-dx/(wrap.clientWidth/NF*1.6))}});
+window.addEventListener("pointerup",()=>{dragging=false;wrap.classList.remove("drag");setTimeout(()=>moved=0,0)});
+document.addEventListener("keydown",e=>{if($("#modal").classList.contains("open"))return;if(e.key==="ArrowLeft"){stopAuto();hideTip();setFrame(cur_f-1)}if(e.key==="ArrowRight"){stopAuto();hideTip();setFrame(cur_f+1)}});
+$("#prev").onclick=()=>{stopAuto();hideTip();setFrame(cur_f-1)};
+$("#next").onclick=()=>{stopAuto();hideTip();setFrame(cur_f+1)};
+function stopAuto(){if(autoT){clearInterval(autoT);autoT=null;$("#auto").textContent="⟳ Rotation auto"}}
+$("#auto").onclick=()=>{if(autoT){stopAuto();return}hideTip();$("#auto").textContent="⏸ Pause";autoT=setInterval(()=>setFrame(cur_f+1),130)};
+function showTip(n,e,touch){
+  const l=LOTS[n],a=annex(l);
+  document.querySelectorAll(".lot.on").forEach(x=>x.classList.remove("on"));
+  document.querySelector(`.lot[data-n="${n}"]`).classList.add("on");
+  tip.dataset.n=n;
+  tip.innerHTML=`<div class="tip-h" style="background:${COLORS[l.typo]}"><span>Appartement ${n}</span><span>${l.typo}</span></div>
+  <div class="tip-b"><div class="big">${total(l)} m²</div>
+  <div class="row"><span>Étage</span><b>${l.etage}</b></div>
+  ${a.map(r=>`<div class="row"><span>${r[0]}</span><b>${r[1]} m²</b></div>`).join("")}
+  <div class="cta">${touch?"Toucher pour ouvrir la fiche":"Cliquer pour la fiche complète"} →</div></div>`;
+  tip.classList.toggle("touch",!!touch);tip.classList.add("show");
+  tip.onclick=touch?()=>{hideTip();openLot(n)}:null;
+  if(!touch)moveTip(e);
+}
+function moveTip(e){
+  const w=tip.offsetWidth,h=tip.offsetHeight;
+  let x=e.clientX+18,y=e.clientY+18;
+  if(x+w>innerWidth-8)x=e.clientX-w-18;
+  if(y+h>innerHeight-8)y=innerHeight-h-8;
+  tip.style.left=x+"px";tip.style.top=Math.max(8,y)+"px";
+}
+function hideTip(){tip.classList.remove("show");document.querySelectorAll(".lot.on").forEach(x=>x.classList.remove("on"))}
+document.addEventListener("pointerdown",e=>{if(e.pointerType==="touch"&&!e.target.closest(".lot,#tip"))hideTip()});
+
+/* fiche complète */
+let cur=null,tab="pdf",vIdx=0;
+function openLot(n){
+  hideTip();cur=LOTS[n];cur.n=n;tab="pdf";vIdx=0;
+  const m=$("#modal");
+  $("#m-badge").textContent=cur.typo;$("#m-badge").style.background=COLORS[cur.typo];
+  $("#m-title").textContent=`Appartement ${n} · ${cur.etage}`;
+  $("#m-dl").href=A(`pdf/lot-${String(n).padStart(2,"0")}.pdf`);$("#m-dl").setAttribute("download",`plan-de-vente-lot-${String(n).padStart(2,"0")}.pdf`);
+  const a=annex(cur);
+  $("#side").innerHTML=`<div class="kpis"><div class="kpi"><small>Surface habitable</small><b>${total(cur)} m²</b></div><div class="kpi"><small>Typologie</small><b>${cur.typo}</b></div></div>
+   <h3>Surfaces habitables</h3><table>${rooms(cur).map(r=>`<tr><td>${r[0]}</td><td>${r[1]} m²</td></tr>`).join("")}<tr class="tot"><td>Total</td><td>${total(cur)} m²</td></tr></table>
+   ${a.length?`<h3>Extérieurs</h3><table>${a.map(r=>`<tr><td>${r[0]}</td><td>${r[1]} m²</td></tr>`).join("")}</table>`:""}
+   <p class="note">Surfaces approximatives, plans non contractuels. Mobilier indicatif.</p>`;
+  renderTabs();m.classList.add("open");m.setAttribute("aria-hidden","false");$("#m-close").focus();
+}
+const plan3d=l=>l.views.find(v=>/plan/i.test(v.label));
+const inter=l=>l.views.filter(v=>!/plan/i.test(v.label));
+function renderTabs(){
+  const t=[["pdf","Plan de vente"]];if(plan3d(cur))t.push(["3d","Plan 3D"]);if(inter(cur).length)t.push(["int","Vues intérieures"]);
+  $("#tabs").innerHTML=t.map(([k,l])=>`<button class="${k===tab?"on":""}" data-k="${k}">${l}</button>`).join("");
+  $("#tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{tab=b.dataset.k;vIdx=0;renderTabs()});
+  const v=$("#view");
+  if(tab==="pdf")v.innerHTML=`<div class="pic"><img src="${A(`img/plan-lot${String(cur.n).padStart(2,"0")}.jpg`)}" alt="Plan de vente"></div>`;
+  else if(tab==="3d")v.innerHTML=`<div class="pic"><img src="${A(plan3d(cur).file)}" alt="Plan 3D"></div>`;
+  else{const L=inter(cur);
+    v.innerHTML=`<div class="pic"><img id="big" src="${A(L[vIdx].file)}" alt="${L[vIdx].label}"></div><div id="thumbs">${L.map((x,i)=>`<img src="${A(x.file)}" alt="${x.label}" title="${x.label}" class="${i===vIdx?"on":""}" data-i="${i}">`).join("")}</div>`;
+    v.querySelectorAll("#thumbs img").forEach(im=>im.onclick=()=>{vIdx=+im.dataset.i;renderTabs()});}
+}
+function closeLot(){$("#modal").classList.remove("open");$("#modal").setAttribute("aria-hidden","true");$("#view").innerHTML=""}
+$("#m-close").onclick=closeLot;
+$("#modal").addEventListener("click",e=>{if(e.target.id==="modal")closeLot()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeLot()});
+</script>
+</body>
+</html>

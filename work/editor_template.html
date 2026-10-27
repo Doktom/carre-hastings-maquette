@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Éditeur de polygones</title>
+<style>
+:root{--bg:#14171c;--panel:#fff;--ink:#1d232b;--mute:#6b7683;--line:#e4e8ed;--acc:#1d232b}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font:13px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+#app{display:grid;grid-template-columns:320px minmax(0,1fr);height:100%}
+#side{background:var(--panel);overflow:auto;padding:14px;display:flex;flex-direction:column;gap:14px}
+h1{font-size:16px;margin:0}
+h2{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:0 0 6px}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.btn{appearance:none;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;font:600 12px inherit;color:var(--ink);cursor:pointer}
+.btn:hover{background:#f3f5f8}.btn.dark{background:var(--acc);color:#fff;border-color:var(--acc)}.btn.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+input[type=text],input[type=number],select{border:1px solid var(--line);border-radius:8px;padding:5px 8px;font:inherit;background:#fff}
+input[type=number]{width:64px}input[type=text]{width:100%}
+#lots{display:flex;flex-direction:column;gap:6px;max-height:34vh;overflow:auto;padding-right:2px}
+.lot{display:grid;grid-template-columns:14px 1fr auto auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:6px 8px;cursor:pointer}
+.lot.sel{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.dot{width:12px;height:12px;border-radius:3px}
+.lot small{color:var(--mute)}
+.x{border:0;background:none;color:var(--mute);cursor:pointer;font-size:15px}
+.hint{color:var(--mute);font-size:12px}
+.hint kbd{background:#f1f3f6;border:1px solid var(--line);border-radius:4px;padding:0 4px;font:11px ui-monospace,monospace}
+#view{position:relative;overflow:hidden;background:#0d0f12;cursor:crosshair;touch-action:none}
+#stage{position:absolute;left:0;top:0;transform-origin:0 0}
+#stage img{display:block;user-select:none;-webkit-user-drag:none;image-rendering:auto}
+#stage svg{position:absolute;left:0;top:0;overflow:visible}
+#bar{position:absolute;left:12px;top:12px;max-width:calc(100% - 24px);flex-wrap:wrap;display:flex;gap:6px;align-items:center;background:rgba(255,255,255,.95);border-radius:10px;padding:6px 8px;box-shadow:0 4px 18px rgba(0,0,0,.3)}
+#status{position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,.95);border-radius:10px;padding:6px 10px;box-shadow:0 4px 18px rgba(0,0,0,.3);font-variant-numeric:tabular-nums}
+#toast{position:absolute;right:12px;top:12px;background:#1d232b;color:#fff;border-radius:10px;padding:8px 12px;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.show{opacity:1}
+@media (max-width:820px){#app{grid-template-columns:1fr;grid-template-rows:auto minmax(320px,1fr)}#side{max-height:44vh}}
+</style>
+</head>
+<body>
+<div id="app">
+ <aside id="side">
+  <div><h1>Éditeur de polygones</h1><div class="hint">Tracez les appartements une seule fois sur l'image 0 : le tracé est ensuite reporté sur toutes les autres images.</div></div>
+
+  <div>
+   <h2>Niveau / image</h2>
+   <input type="text" id="level" value="R+1" aria-label="Nom du niveau">
+   <div class="row" style="margin-top:6px">
+    <button class="btn" id="openImg">Ouvrir une image…</button>
+    <input type="file" id="fileImg" accept="image/*" hidden>
+    <span class="hint" id="imgInfo"></span>
+   </div>
+  </div>
+
+  <div>
+   <h2>Appartements</h2>
+   <div id="lots"></div>
+   <div class="row" style="margin-top:8px">
+    <input type="number" id="newNum" min="1" value="9" aria-label="Numéro de lot">
+    <select id="newTypo"><option>T2</option><option>T3</option><option selected>T4</option><option>T4/T5</option><option>T5</option></select>
+    <button class="btn dark" id="addLot">+ Ajouter et tracer</button>
+   </div>
+  </div>
+
+  <div>
+   <h2>Options</h2>
+   <label class="row"><input type="checkbox" id="snap" checked> Magnétisme sur les sommets voisins</label>
+   <label class="row"><input type="checkbox" id="showNum" checked> Afficher les numéros</label>
+   <label class="row"><input type="checkbox" id="solo"> Estomper les autres lots</label>
+   <label class="row">Opacité <input type="range" id="op" min="0" max="80" value="30"></label>
+  </div>
+
+  <div>
+   <h2>Fichier</h2>
+   <div class="row">
+    <button class="btn dark" id="exp">⬇ Exporter le JSON</button>
+    <button class="btn" id="copy">Copier</button>
+    <button class="btn" id="imp">Importer…</button>
+    <input type="file" id="fileJson" accept=".json,application/json" hidden>
+   </div>
+   <div class="hint" style="margin-top:6px">Le tracé est sauvegardé automatiquement dans ce navigateur.</div>
+  </div>
+
+  <div class="hint">
+   <h2>Raccourcis</h2>
+   <b>Tracer</b> : clic = ajouter un point · <kbd>Entrée</kbd>, double-clic ou clic sur le 1<sup>er</sup> point = fermer · <kbd>Retour</kbd> = point précédent · <kbd>Échap</kbd> = annuler<br>
+   <b>Éditer</b> : glisser un polygone = le déplacer en entier (<kbd>Maj</kbd> + glisser = tous les polygones de l'image) · glisser un sommet · clic sur un côté = nouveau sommet · double-clic ou <kbd>Suppr</kbd> = supprimer le sommet · flèches = déplacer de 0,5 px (<kbd>Maj</kbd> = 5 px)<br>
+   <b>Vue</b> : molette = zoom · <kbd>Espace</kbd> + glisser, ou clic droit/milieu = déplacer · <kbd>0</kbd> = ajuster<br>
+   <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd> = annuler / rétablir
+  </div>
+ </aside>
+
+ <main id="view">
+  <div id="stage"><img id="img" alt=""><svg id="svg"></svg></div>
+  <div id="bar">
+   <button class="btn" id="mEdit">Éditer</button>
+   <button class="btn" id="mDraw">Tracer</button>
+   <button class="btn" id="zin" aria-label="Zoom avant">＋</button>
+   <button class="btn" id="zout" aria-label="Zoom arrière">－</button>
+   <button class="btn" id="zfit">Ajuster</button>
+   <button class="btn" id="undo" aria-label="Annuler">↶</button>
+   <button class="btn" id="redo" aria-label="Rétablir">↷</button>
+  </div>
+  <div id="status">–</div>
+  <div id="toast"></div>
+ </main>
+</div>
+
+<script>
+const COLORS={"T2":"#2bb673","T3":"#2f80ed","T4":"#f2994a","T4/T5":"#9b51e0","T5":"#e5484d"};
+const DEFAULT_IMG="__IMG__";
+const DEFAULT_LOTS=__LOTS__;
+const $=s=>document.querySelector(s);
+const NS="http://www.w3.org/2000/svg";
+const view=$("#view"),stage=$("#stage"),img=$("#img"),svg=$("#svg");
+
+let S={w:2560,h:1440,lots:JSON.parse(JSON.stringify(DEFAULT_LOTS)),sel:null,mode:"edit",draft:null,selV:null};
+let V={x:0,y:0,k:1};
+let hist=[],redo=[],spaceDown=false,cursor=null;
+
+/* ---------- persistance ---------- */
+const KEY="editeur-polygones-v2";
+function save(){try{localStorage.setItem(KEY,JSON.stringify({lots:S.lots,level:$("#level").value}))}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||"null");if(d&&d.lots&&Object.keys(d.lots).length){S.lots=d.lots;if(d.level)$("#level").value=d.level}}catch(e){}}
+function snapshot(){hist.push(JSON.stringify(S.lots));if(hist.length>200)hist.shift();redo=[]}
+function undo(){if(!hist.length)return;redo.push(JSON.stringify(S.lots));S.lots=JSON.parse(hist.pop());S.selV=null;render()}
+function redoF(){if(!redo.length)return;hist.push(JSON.stringify(S.lots));S.lots=JSON.parse(redo.pop());S.selV=null;render()}
+function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("show"),1800)}
+
+/* ---------- vue ---------- */
+function applyView(){stage.style.transform=`translate(${V.x}px,${V.y}px) scale(${V.k})`;render()}
+function fit(){const r=view.getBoundingClientRect();const k=Math.min(r.width/S.w,r.height/S.h)*.98;V={k,x:(r.width-S.w*k)/2,y:(r.height-S.h*k)/2};applyView()}
+function toImg(e){const r=view.getBoundingClientRect();return[(e.clientX-r.left-V.x)/V.k,(e.clientY-r.top-V.y)/V.k]}
+function zoomAt(f,cx,cy){const r=view.getBoundingClientRect();const px=cx-r.left,py=cy-r.top;const k=Math.max(.05,Math.min(40,V.k*f));V.x=px-(px-V.x)*(k/V.k);V.y=py-(py-V.y)*(k/V.k);V.k=k;applyView()}
+view.addEventListener("wheel",e=>{e.preventDefault();zoomAt(e.deltaY<0?1.2:1/1.2,e.clientX,e.clientY)},{passive:false});
+view.addEventListener("contextmenu",e=>e.preventDefault());
+
+/* ---------- rendu ---------- */
+function colorOf(l){return COLORS[l.typo]||"#888"}
+function render(){
+  const k=V.k,op=$("#op").value/100,solo=$("#solo").checked&&S.sel;
+  let h=`<rect x="0" y="0" width="${S.w}" height="${S.h}" fill="none" pointer-events="none"/>`;
+  for(const id of Object.keys(S.lots)){
+    const l=S.lots[id],c=colorOf(l),sel=S.sel===id;
+    const pts=l.pts.map(p=>p.join(",")).join(" ");
+    if(l.pts.length>=3){
+      h+=`<polygon data-lot="${id}" points="${pts}" fill="${c}" fill-opacity="${solo&&!sel?0:(sel?op+.12:op)}" stroke="${c}" stroke-opacity="${solo&&!sel?.35:1}" stroke-width="${(sel?2.5:1.8)/k}" stroke-linejoin="round" style="cursor:${sel?"move":"pointer"}"${solo&&!sel?' pointer-events="none"':""}/>`;
+    }
+    if(sel&&S.mode==="edit"){
+      // côtés cliquables (insertion de sommet)
+      for(let i=0;i<l.pts.length;i++){const a=l.pts[i],b=l.pts[(i+1)%l.pts.length];
+        h+=`<line data-edge="${id}:${i}" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="transparent" stroke-width="${12/k}" style="cursor:copy"/>`}
+      l.pts.forEach((p,i)=>{
+        const on=S.selV&&S.selV[0]===id&&S.selV[1]===i;
+        h+=`<circle data-v="${id}:${i}" cx="${p[0]}" cy="${p[1]}" r="${(on?6:4.5)/k}" fill="${on?"#fff":c}" stroke="${on?c:"#fff"}" stroke-width="${1.6/k}" style="cursor:move"/>`;
+      });
+    }
+    if($("#showNum").checked&&l.pts.length>=3){
+      const [cx,cy]=centroid(l.pts);
+      h+=`<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" font-size="${18/k}" font-weight="800" fill="#fff" stroke="rgba(0,0,0,.6)" stroke-width="${3/k}" paint-order="stroke" pointer-events="none">${id}</text>`;
+    }
+  }
+  if(S.draft){
+    const c=colorOf(S.lots[S.draft.id]||{typo:"T4"}),p=S.draft.pts;
+    const all=cursor?[...p,cursor]:p;
+    h+=`<polyline points="${all.map(q=>q.join(",")).join(" ")}" fill="${c}" fill-opacity=".15" stroke="${c}" stroke-width="${2/k}" stroke-dasharray="${6/k} ${4/k}" pointer-events="none"/>`;
+    p.forEach((q,i)=>{h+=`<circle cx="${q[0]}" cy="${q[1]}" r="${(i===0?7:4.5)/k}" fill="${i===0?"#fff":c}" stroke="${c}" stroke-width="${1.6/k}" pointer-events="none"/>`});
+  }
+  svg.innerHTML=h;
+  svg.setAttribute("width",S.w);svg.setAttribute("height",S.h);
+  renderLots();updateStatus();
+}
+function centroid(pts){let a=0,cx=0,cy=0;for(let i=0;i<pts.length;i++){const[x0,y0]=pts[i],[x1,y1]=pts[(i+1)%pts.length];const c=x0*y1-x1*y0;a+=c;cx+=(x0+x1)*c;cy+=(y0+y1)*c}a/=2;return a?[cx/(6*a),cy/(6*a)]:pts[0]}
+function renderLots(){
+  const el=$("#lots");el.innerHTML="";
+  for(const id of Object.keys(S.lots).sort((a,b)=>a-b)){
+    const l=S.lots[id];
+    const d=document.createElement("div");d.className="lot"+(S.sel===id?" sel":"");
+    d.innerHTML=`<span class="dot" style="background:${colorOf(l)}"></span><div><b>Lot ${id}</b> <small>${l.pts.length} pts</small></div>
+    <select aria-label="Typologie du lot ${id}">${["T2","T3","T4","T4/T5","T5"].map(t=>`<option${t===l.typo?" selected":""}>${t}</option>`).join("")}</select>
+    <button class="x" title="Supprimer le lot" aria-label="Supprimer le lot ${id}">✕</button>`;
+    d.onclick=()=>{S.sel=id;S.selV=null;render()};
+    d.querySelector("select").onclick=e=>e.stopPropagation();
+    d.querySelector("select").onchange=e=>{snapshot();l.typo=e.target.value;save();render()};
+    d.querySelector(".x").onclick=e=>{e.stopPropagation();snapshot();delete S.lots[id];if(S.sel===id)S.sel=null;S.selV=null;save();render();toast(`Lot ${id} supprimé (Ctrl+Z pour annuler)`)};
+    el.appendChild(d);
+  }
+}
+function updateStatus(){
+  const m=S.mode==="draw"?(S.draft?`Tracé du lot ${S.draft.id} : ${S.draft.pts.length} point(s) — Entrée ou double-clic pour fermer`:"Mode tracé"):"Mode édition";
+  $("#status").textContent=`${m} · zoom ${(V.k*100).toFixed(0)} %`+(cursor?` · x ${cursor[0].toFixed(1)}  y ${cursor[1].toFixed(1)}`:"");
+  $("#mEdit").classList.toggle("on",S.mode==="edit");$("#mDraw").classList.toggle("on",S.mode==="draw");
+  view.style.cursor=S.mode==="draw"?"crosshair":"default";
+}
+
+/* ---------- magnétisme ---------- */
+function snapPt(p,skip){
+  if(!$("#snap").checked)return p;
+  const R=9/V.k;let best=null,bd=R;
+  for(const id of Object.keys(S.lots)){S.lots[id].pts.forEach((q,i)=>{if(skip&&skip[0]===id&&skip[1]===i)return;const d=Math.hypot(q[0]-p[0],q[1]-p[1]);if(d<bd){bd=d;best=q}})}
+  if(S.draft&&S.draft.pts.length>=3){const q=S.draft.pts[0];const d=Math.hypot(q[0]-p[0],q[1]-p[1]);if(d<bd){bd=d;best=q}}
+  return best?[best[0],best[1]]:p;
+}
+const r1=v=>Math.round(v*10)/10;
+
+/* ---------- interactions ---------- */
+let drag=null,pan=null;
+view.addEventListener("pointerdown",e=>{
+  if(e.target.closest&&e.target.closest("#bar"))return;
+  view.setPointerCapture(e.pointerId);
+  const isPan=e.button===1||e.button===2||spaceDown;
+  if(isPan){pan={x:e.clientX,y:e.clientY,vx:V.x,vy:V.y};return}
+  if(e.button!==0)return;
+  const t=e.target;
+  const p=toImg(e);
+  if(S.mode==="draw"&&S.draft){
+    const q=snapPt(p);
+    const f=S.draft.pts[0];
+    if(S.draft.pts.length>=3&&Math.hypot(q[0]-f[0],q[1]-f[1])<9/V.k){closeDraft();return}
+    S.draft.pts.push([r1(q[0]),r1(q[1])]);render();return;
+  }
+  if(S.mode==="edit"){
+    if(t.dataset&&t.dataset.v){const[id,i]=t.dataset.v.split(":");S.sel=id;S.selV=[id,+i];snapshot();drag={id,i:+i};render();return}
+    if(t.dataset&&t.dataset.edge){const[id,i]=t.dataset.edge.split(":");snapshot();const l=S.lots[id];const q=snapPt(p);l.pts.splice(+i+1,0,[r1(q[0]),r1(q[1])]);S.selV=[id,+i+1];drag={id,i:+i+1};render();return}
+    if(t.dataset&&t.dataset.lot){
+      const id=t.dataset.lot;S.sel=id;S.selV=null;
+      const ids=e.shiftKey?Object.keys(S.lots):[id];
+      const orig={};ids.forEach(i=>orig[i]=S.lots[i].pts.map(q=>[q[0],q[1]]));
+      drag={whole:true,id,ids,orig,start:p,moved:false};render();return}
+    S.selV=null;S.sel=null;render();
+    pan={x:e.clientX,y:e.clientY,vx:V.x,vy:V.y};
+  }
+});
+view.addEventListener("pointermove",e=>{
+  cursor=toImg(e);
+  if(pan){V.x=pan.vx+(e.clientX-pan.x);V.y=pan.vy+(e.clientY-pan.y);applyView();return}
+  if(drag&&drag.whole){
+    const dx=cursor[0]-drag.start[0],dy=cursor[1]-drag.start[1];
+    if(!drag.moved){if(Math.hypot(dx,dy)*V.k<4)return;snapshot();drag.moved=true}
+    drag.ids.forEach(i=>{S.lots[i].pts=drag.orig[i].map(q=>[r1(q[0]+dx),r1(q[1]+dy)])});render();return}
+  if(drag){const q=snapPt(cursor,[drag.id,drag.i]);S.lots[drag.id].pts[drag.i]=[r1(q[0]),r1(q[1])];render();return}
+  if(S.draft)render();else updateStatus();
+});
+view.addEventListener("pointerup",()=>{if(drag){if(!drag.whole||drag.moved){save()}drag=null}pan=null});
+view.addEventListener("dblclick",e=>{
+  if(S.mode==="draw"&&S.draft){ if(S.draft.pts.length>=4)S.draft.pts.pop();closeDraft();return}
+  const t=e.target;if(t.dataset&&t.dataset.v){const[id,i]=t.dataset.v.split(":");deleteVertex(id,+i)}
+});
+function deleteVertex(id,i){const l=S.lots[id];if(l.pts.length<=3){toast("Un lot doit garder au moins 3 points");return}snapshot();l.pts.splice(i,1);S.selV=null;save();render()}
+function closeDraft(){
+  const d=S.draft;if(!d)return;
+  if(d.pts.length<3){toast("Il faut au moins 3 points");return}
+  snapshot();S.lots[d.id].pts=d.pts;S.sel=d.id;S.draft=null;S.mode="edit";save();render();toast(`Lot ${d.id} tracé (${d.pts.length} points)`);
+}
+function startDraw(id){S.sel=id;S.draft={id,pts:[]};S.mode="draw";S.selV=null;render()}
+
+document.addEventListener("keydown",e=>{
+  if(e.target.matches("input,select,textarea")&&e.key!=="Escape")return;
+  if(e.code==="Space"){spaceDown=true;e.preventDefault();return}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"){e.preventDefault();e.shiftKey?redoF():undo();return}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="y"){e.preventDefault();redoF();return}
+  if(e.key==="Escape"){if(S.draft){S.draft=null;S.mode="edit";render()}else{S.selV=null;render()}return}
+  if(e.key==="Enter"&&S.draft){closeDraft();return}
+  if(e.key==="Backspace"&&S.draft){e.preventDefault();S.draft.pts.pop();render();return}
+  if(e.key==="0"){fit();return}
+  if(S.selV&&S.mode==="edit"){
+    const[id,i]=S.selV;const l=S.lots[id];if(!l)return;
+    if(e.key==="Delete"||e.key==="Backspace"){deleteVertex(id,i);return}
+    const st=e.shiftKey?5:.5;const m={ArrowLeft:[-st,0],ArrowRight:[st,0],ArrowUp:[0,-st],ArrowDown:[0,st]}[e.key];
+    if(m){e.preventDefault();snapshot();l.pts[i]=[r1(l.pts[i][0]+m[0]),r1(l.pts[i][1]+m[1])];save();render()}
+  }
+});
+document.addEventListener("keyup",e=>{if(e.code==="Space")spaceDown=false});
+
+/* ---------- boutons ---------- */
+$("#mEdit").onclick=()=>{S.draft=null;S.mode="edit";render()};
+$("#mDraw").onclick=()=>{if(!S.sel){toast("Sélectionnez ou ajoutez un lot d'abord");return}startDraw(S.sel)};
+$("#zin").onclick=()=>{const r=view.getBoundingClientRect();zoomAt(1.4,r.left+r.width/2,r.top+r.height/2)};
+$("#zout").onclick=()=>{const r=view.getBoundingClientRect();zoomAt(1/1.4,r.left+r.width/2,r.top+r.height/2)};
+$("#zfit").onclick=fit;$("#undo").onclick=undo;$("#redo").onclick=redoF;
+$("#op").oninput=render;$("#solo").onchange=render;$("#showNum").onchange=render;$("#level").oninput=save;
+$("#addLot").onclick=()=>{
+  const n=String(parseInt($("#newNum").value,10));
+  if(!n||n==="NaN"){toast("Numéro invalide");return}
+  snapshot();
+  if(!S.lots[n])S.lots[n]={typo:$("#newTypo").value,pts:[]};else S.lots[n].typo=$("#newTypo").value;
+  $("#newNum").value=String(+n+1);save();startDraw(n);
+};
+$("#openImg").onclick=()=>$("#fileImg").click();
+$("#fileImg").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>setImage(r.result,f.name);r.readAsDataURL(f)};
+function setImage(src,name){
+  const im=new Image();im.onload=()=>{S.w=im.naturalWidth;S.h=im.naturalHeight;img.src=src;img.width=S.w;img.height=S.h;$("#imgInfo").textContent=`${name||"image"} · ${S.w}×${S.h}`;fit()};im.src=src;
+}
+function payload(){
+  const out={level:$("#level").value,image:{width:S.w,height:S.h},lots:{}};
+  for(const id of Object.keys(S.lots).sort((a,b)=>a-b)){const l=S.lots[id];if(l.pts.length>=3)out.lots[id]={typo:l.typo,points:l.pts}}
+  return out;
+}
+$("#exp").onclick=()=>{
+  const p=payload();const b=new Blob([JSON.stringify(p,null,1)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`polygones-${($("#level").value||"niveau").replace(/[^\w+-]/g,"")}.json`;document.body.appendChild(a);a.click();a.remove();toast("Fichier exporté");
+};
+$("#copy").onclick=async()=>{const t=JSON.stringify(payload());try{await navigator.clipboard.writeText(t);toast("JSON copié")}catch(e){prompt("Copiez le JSON :",t)}};
+$("#imp").onclick=()=>$("#fileJson").click();
+$("#fileJson").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);snapshot();S.lots={};for(const id in d.lots)S.lots[id]={typo:d.lots[id].typo,pts:d.lots[id].points};if(d.level)$("#level").value=d.level;S.sel=null;save();render();toast("Tracé importé")}catch(err){toast("Fichier invalide")}};r.readAsText(f)};
+window.addEventListener("resize",()=>{});
+
+load();setImage(DEFAULT_IMG,"R+1 · image 0");
+</script>
+</body>
+</html>

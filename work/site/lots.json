@@ -1,0 +1,322 @@
+{
+ "5": {
+  "num": 5,
+  "typo": "T4",
+  "etage": "Étage 1",
+  "table": [
+   [
+    "Hall Hall",
+    "3,66"
+   ],
+   [
+    "Dégagement",
+    "6,64"
+   ],
+   [
+    "Cellier",
+    "4,02"
+   ],
+   [
+    "WC",
+    "2,11"
+   ],
+   [
+    "Salle de bain",
+    "4,25"
+   ],
+   [
+    "Salle d'eau",
+    "4,05"
+   ],
+   [
+    "Chambre 1",
+    "11,61"
+   ],
+   [
+    "Chambre 2",
+    "9,10"
+   ],
+   [
+    "Dressing",
+    "3,18"
+   ],
+   [
+    "Séjour - Cuisine",
+    "31,34"
+   ],
+   [
+    "Chambre 3",
+    "10,04"
+   ],
+   [
+    "TOTAL",
+    "90,00"
+   ],
+   [
+    "Balcon",
+    "9,00"
+   ]
+  ],
+  "views": [
+   {
+    "file": "img/lot05_00.jpg",
+    "label": "Chambre 1"
+   },
+   {
+    "file": "img/lot05_01.jpg",
+    "label": "Chambre 2"
+   },
+   {
+    "file": "img/lot05_02.jpg",
+    "label": "Chambre 3"
+   },
+   {
+    "file": "img/lot05_03.jpg",
+    "label": "Plan 3D"
+   },
+   {
+    "file": "img/lot05_04.jpg",
+    "label": "Séjour 1 jour"
+   },
+   {
+    "file": "img/lot05_05.jpg",
+    "label": "Séjour 1 nuit"
+   },
+   {
+    "file": "img/lot05_06.jpg",
+    "label": "Séjour 2"
+   }
+  ]
+ },
+ "6": {
+  "num": 6,
+  "typo": "T4",
+  "etage": "Étage 1",
+  "table": [
+   [
+    "Hall Hall",
+    "5,97"
+   ],
+   [
+    "Séjour - Cuisine",
+    "32,05"
+   ],
+   [
+    "Dégagement",
+    "4,77"
+   ],
+   [
+    "Chambre 1",
+    "13,69"
+   ],
+   [
+    "Salle de bain",
+    "3,91"
+   ],
+   [
+    "Salle d'eau + WC",
+    "4,79"
+   ],
+   [
+    "Cellier",
+    "4,37"
+   ],
+   [
+    "Chambre 2",
+    "10,89"
+   ],
+   [
+    "Chambre 3",
+    "10,61"
+   ],
+   [
+    "TOTAL",
+    "91,05"
+   ],
+   [
+    "Balcon",
+    "8,00"
+   ]
+  ],
+  "views": [
+   {
+    "file": "img/lot06_00.jpg",
+    "label": "Chambre 1"
+   },
+   {
+    "file": "img/lot06_01.jpg",
+    "label": "Chambre 2"
+   },
+   {
+    "file": "img/lot06_02.jpg",
+    "label": "Chambre 3"
+   },
+   {
+    "file": "img/lot06_03.jpg",
+    "label": "Plan 3D"
+   },
+   {
+    "file": "img/lot06_04.jpg",
+    "label": "Séjour 1"
+   }
+  ]
+ },
+ "7": {
+  "num": 7,
+  "typo": "T3",
+  "etage": "Étage 1",
+  "table": [
+   [
+    "Hall Hall",
+    "5,16"
+   ],
+   [
+    "Dégagement",
+    "3,36"
+   ],
+   [
+    "Rangement",
+    "1,28"
+   ],
+   [
+    "Chambre 1",
+    "11,90"
+   ],
+   [
+    "Salle d'eau",
+    "4,51"
+   ],
+   [
+    "WC",
+    "1,27"
+   ],
+   [
+    "Séjour - Cuisine",
+    "24,84"
+   ],
+   [
+    "Chambre 2",
+    "11,09"
+   ],
+   [
+    "Salle de bain",
+    "3,78"
+   ],
+   [
+    "Dressing",
+    "3,78"
+   ],
+   [
+    "TOTAL",
+    "70,97"
+   ],
+   [
+    "Balcon",
+    "7,11"
+   ]
+  ],
+  "views": [
+   {
+    "file": "img/lot07_00.jpg",
+    "label": "Chambre 1"
+   },
+   {
+    "file": "img/lot07_01.jpg",
+    "label": "Chambre 2"
+   },
+   {
+    "file": "img/lot07_02.jpg",
+    "label": "Plan 3D"
+   },
+   {
+    "file": "img/lot07_03.jpg",
+    "label": "Séjour 1"
+   },
+   {
+    "file": "img/lot07_04.jpg",
+    "label": "Séjour 2"
+   }
+  ]
+ },
+ "8": {
+  "num": 8,
+  "typo": "T4",
+  "etage": "Étage 1",
+  "table": [
+   [
+    "Hall Hall",
+    "4,95"
+   ],
+   [
+    "Salle de bain + WC",
+    "4,73"
+   ],
+   [
+    "Cellier",
+    "3,71"
+   ],
+   [
+    "Dégagement",
+    "5,09"
+   ],
+   [
+    "Séjour - Cuisine",
+    "28,49"
+   ],
+   [
+    "Salle d'eau",
+    "4,01"
+   ],
+   [
+    "Chambre 1",
+    "11,76"
+   ],
+   [
+    "Chambre 2",
+    "9,65"
+   ],
+   [
+    "Chambre 3",
+    "9,14"
+   ],
+   [
+    "TOTAL",
+    "81,53"
+   ],
+   [
+    "Balcon 1",
+    "13,72"
+   ],
+   [
+    "Balcon 2",
+    "6,90"
+   ]
+  ],
+  "views": [
+   {
+    "file": "img/lot08_00.jpg",
+    "label": "Chambre 1"
+   },
+   {
+    "file": "img/lot08_01.jpg",
+    "label": "Chambre 2"
+   },
+   {
+    "file": "img/lot08_02.jpg",
+    "label": "Plan 3D"
+   },
+   {
+    "file": "img/lot08_03.jpg",
+    "label": "Séjour 1"
+   },
+   {
+    "file": "img/lot08_04.jpg",
+    "label": "Séjour 2"
+   },
+   {
+    "file": "img/lot08_05.jpg",
+    "label": "Séjour 3"
+   }
+  ]
+ }
+}

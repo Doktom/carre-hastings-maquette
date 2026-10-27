@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.log
+# livrables générés (reproductibles avec build_final.py / mk_editor2.py)
+/maquette-r1/
+/maquette-r1-autonome.html
+/controle-polygones.html
+/editeur-polygones.html
+*_tmp.json
